@@ -49,7 +49,26 @@ export function parseFaceResult(res, width = 1, height = 1) {
   if (lm && lm.length > 263) {
     const d = (a, b) => Math.hypot((a.x - b.x) * width, (a.y - b.y) * height, (a.z - b.z) * width);
     const eyes = d(lm[33], lm[263]);
-    if (eyes > 0) blend.mouthGap = d(lm[13], lm[14]) / eyes;
+    if (eyes > 0) {
+      blend.mouthGap = d(lm[13], lm[14]) / eyes;
+
+      // Augen einzeln: Lidabstand / Augenbreite ("Eye Aspect Ratio").
+      // MediaPipes eyeBlink-Werte koppeln beide Augen, das hier nicht.
+      // Als "Schließ-Wert" gespeichert: höher = geschlossener.
+      const earLeft = d(lm[386], lm[374]) / Math.max(d(lm[362], lm[263]), 1e-6); // linkes Auge (des Nutzers)
+      const earRight = d(lm[159], lm[145]) / Math.max(d(lm[33], lm[133]), 1e-6);
+      blend.eyeCloseGeoLeft = 0.4 - earLeft;
+      blend.eyeCloseGeoRight = 0.4 - earRight;
+
+      // Mundwinkel runter: Mundwinkel (61, 291) relativ zur Mundmitte,
+      // entlang der Gesichts-"Unten"-Richtung (senkrecht zur Augenlinie).
+      const ex = (lm[263].x - lm[33].x) * width, ey = (lm[263].y - lm[33].y) * height;
+      const len = Math.hypot(ex, ey) || 1;
+      const down = { x: -ey / len, y: ex / len };
+      const cx = (lm[13].x + lm[14].x) / 2 * width, cy = (lm[13].y + lm[14].y) / 2 * height;
+      const drop = (p) => ((p.x * width - cx) * down.x + (p.y * height - cy) * down.y) / eyes;
+      blend.mouthCornerDown = (drop(lm[61]) + drop(lm[291])) / 2;
+    }
   }
 
   let matrix = null;

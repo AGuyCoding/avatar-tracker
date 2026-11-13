@@ -3,7 +3,7 @@
 // - "peak": größter bisher gesehener Wert (wächst automatisch mit)
 // Ergebnis: dein eigener Bewegungsumfang wird auf 0..1 gestreckt.
 
-const STORAGE_KEY = 'avatar-tracker.calib.v1';
+const STORAGE_KEY = 'avatar-tracker.calib.v2';
 
 // Startwerte für den Maximalwert. Bewusst niedrig, damit auch kleine
 // Bewegungen sofort sichtbar sind; sie wachsen, sobald du stärker bewegst.
@@ -15,10 +15,14 @@ const DEFAULT_PEAK = {
   mouthSmileLeft: 0.6, mouthSmileRight: 0.6, mouthFrownLeft: 0.3, mouthFrownRight: 0.3,
   mouthFunnel: 0.4, mouthPucker: 0.6, mouthStretchLeft: 0.3, mouthStretchRight: 0.3,
   mouthGap: 0.5, cheekPuff: 0.3,
+  eyeCloseGeoLeft: 0.3, eyeCloseGeoRight: 0.3, mouthCornerDown: 0.08,
 };
 // Mindestabstand zwischen Neutral und Maximum: verhindert, dass Rauschen
 // zu großen Ausschlägen verstärkt wird.
-const MIN_RANGE = { mouthGap: 0.15, eyeBlinkLeft: 0.3, eyeBlinkRight: 0.3 };
+const MIN_RANGE = {
+  mouthGap: 0.15, eyeBlinkLeft: 0.3, eyeBlinkRight: 0.3,
+  eyeCloseGeoLeft: 0.12, eyeCloseGeoRight: 0.12, mouthCornerDown: 0.05,
+};
 const DEFAULT_MIN_RANGE = 0.1;
 
 const clamp01 = (v) => Math.min(1, Math.max(0, v));

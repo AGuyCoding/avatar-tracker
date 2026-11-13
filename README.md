@@ -2,6 +2,11 @@
 
 Gesicht per Handykamera → 3D-Avatar (VRM). Läuft komplett im Browser, keine Daten verlassen das Gerät.
 
+## Neu in v0.3
+- Zwinkern mit einzelnen Augen (Lidabstand pro Auge statt gekoppelter eyeBlink-Werte)
+- Mundwinkel runter (geometrisch gemessen) → nach unten gebogener Mund
+- Kalibrierung wird einmal neu angefordert (neue Kanäle)
+
 ## Neu in v0.2
 - Mundöffnung über Lippenabstand statt jawOpen (kein Mund-Öffnen mehr beim Hochschauen)
 - VRoid-Modelle: Brauen, Augen und Mund getrennt gesteuert (keine Komplett-Emotionen mehr)

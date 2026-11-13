@@ -1,10 +1,10 @@
-import { AvatarStage } from './avatar.js?v=0.2.0';
-import { createFaceTracker, startCamera, parseFaceResult } from './tracking.js?v=0.2.0';
-import { mapVroid, mapPresets, mapPerfectSync, countPerfectSync, mapGaze, headEuler, ARKIT_NAMES } from './mapping.js?v=0.2.0';
-import { FilterBank, filterSettings } from './filters.js?v=0.2.0';
-import { Calibrator } from './calib.js?v=0.2.0';
+import { AvatarStage } from './avatar.js?v=0.3.0';
+import { createFaceTracker, startCamera, parseFaceResult } from './tracking.js?v=0.3.0';
+import { mapVroid, mapPresets, mapPerfectSync, countPerfectSync, mapGaze, headEuler, ARKIT_NAMES } from './mapping.js?v=0.3.0';
+import { FilterBank, filterSettings } from './filters.js?v=0.3.0';
+import { Calibrator } from './calib.js?v=0.3.0';
 
-export const VERSION = 'v0.2.0';
+export const VERSION = 'v0.3.0';
 
 // Offizielles pixiv-Beispielmodell (Weitergabe/Änderung erlaubt, Credit nicht nötig)
 const DEFAULT_VRM =
@@ -49,7 +49,7 @@ async function loadAvatar(url) {
 }
 
 // ---------- Tracking -> Avatar ----------
-const CHANNELS = [...ARKIT_NAMES, 'mouthGap'];
+const CHANNELS = [...ARKIT_NAMES, 'mouthGap', 'eyeCloseGeoLeft', 'eyeCloseGeoRight', 'mouthCornerDown'];
 
 function applyFace(face, tSec) {
   if (!stage.vrm) return;
@@ -127,7 +127,8 @@ async function calibrate() {
 const DEBUG_ROWS = [
   ['Braue runter', 'browDownLeft'], ['Braue innen hoch', 'browInnerUp'], ['Braue außen hoch', 'browOuterUpLeft'],
   ['Mund offen', 'mouthGap'], ['jawOpen (alt)', 'jawOpen'], ['Lächeln', 'mouthSmileLeft'],
-  ['Blinzeln L', 'eyeBlinkLeft'], ['Augen weit', 'eyeWideLeft'],
+  ['Mundwinkel runter', 'mouthCornerDown'],
+  ['Auge zu L', 'eyeCloseGeoLeft'], ['Auge zu R', 'eyeCloseGeoRight'], ['Augen weit', 'eyeWideLeft'],
 ];
 function bar(v) { const n = Math.round(Math.min(1, Math.max(0, v)) * 10); return '█'.repeat(n) + '·'.repeat(10 - n); }
 

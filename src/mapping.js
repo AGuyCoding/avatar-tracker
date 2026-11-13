@@ -36,16 +36,18 @@ function features(N, mirror) {
   const side = (n) => N(mirror ? swapLR(n) : n);
   const open = N('mouthGap');
   const smile = avg(N('mouthSmileLeft'), N('mouthSmileRight'));
+  // Blinzeln: geometrische Messung pro Auge (unabhängig), Blendshape nur als Stütze
+  const blink = (n) => Math.max(side('eyeCloseGeo' + n), side('eyeBlink' + n) * 0.5);
   return {
-    blinkL: side('eyeBlinkLeft'),
-    blinkR: side('eyeBlinkRight'),
+    blinkL: blink('Left'),
+    blinkR: blink('Right'),
     wide: avg(N('eyeWideLeft'), N('eyeWideRight')),
     browDown: avg(N('browDownLeft'), N('browDownRight')),
     browInner: N('browInnerUp'),
     browOuter: avg(N('browOuterUpLeft'), N('browOuterUpRight')),
     open,
     smile,
-    frown: avg(N('mouthFrownLeft'), N('mouthFrownRight')),
+    frown: Math.max(avg(N('mouthFrownLeft'), N('mouthFrownRight')), N('mouthCornerDown')),
     funnel: N('mouthFunnel'),
     pucker: N('mouthPucker'),
     stretch: avg(N('mouthStretchLeft'), N('mouthStretchRight')),
@@ -53,7 +55,7 @@ function features(N, mirror) {
 }
 
 // Blinzeln "einrasten" lassen: halb geschlossen wirkt unruhig
-const blinkCurve = (v) => remap(v, 0.35, 0.8);
+const blinkCurve = (v) => remap(v, 0.35, 0.75);
 
 /**
  * VRoid-Modelle haben einzelne Formen für Brauen (BRW), Augen (EYE) und Mund (MTH).
@@ -80,7 +82,8 @@ export function mapVroid(N, mirror) {
     Fcl_MTH_E: f.stretch * 0.6,
     Fcl_MTH_I: f.smile * f.open * 0.5,
     Fcl_MTH_Fun: f.smile * (1 - f.open * 0.7),
-    Fcl_MTH_Sorrow: f.frown * (1 - f.smile),
+    // MTH_Angry = nach unten gebogener Mund (Mundwinkel runter), ohne Brauen/Augen
+    Fcl_MTH_Angry: f.frown * (1 - f.smile) * (1 - f.open * 0.7),
   };
 }
 
