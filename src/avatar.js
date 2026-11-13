@@ -66,7 +66,35 @@ export class AvatarStage {
     this.expressionNames = new Set(
       (vrm.expressionManager?.expressions || []).map((e) => e.expressionName),
     );
+    this.indexMorphs(vrm);
     return vrm;
+  }
+
+  /** Alle Morph-Targets (Blendshapes) der Meshes nach Kurznamen erfassen. */
+  indexMorphs(vrm) {
+    this.morphs = new Map();
+    this.direct = {};
+    vrm.scene.traverse((o) => {
+      if (!o.morphTargetDictionary) return;
+      for (const [full, index] of Object.entries(o.morphTargetDictionary)) {
+        const short = full.slice(full.lastIndexOf('.') + 1); // "Face.M_F00_000_00_Fcl_BRW_Angry" -> nach dem Punkt
+        const key = short.includes('Fcl_') ? short.slice(short.indexOf('Fcl_')) : short;
+        if (!this.morphs.has(key)) this.morphs.set(key, []);
+        this.morphs.get(key).push({ mesh: o, index });
+      }
+    });
+    this.isVroid = this.morphs.has('Fcl_BRW_Angry') && this.morphs.has('Fcl_MTH_A');
+  }
+
+  /** Morph direkt setzen (wird nach vrm.update() angewendet). */
+  setMorph(name, value) {
+    if (this.morphs?.has(name)) this.direct[name] = value;
+  }
+
+  applyDirect() {
+    for (const [name, v] of Object.entries(this.direct)) {
+      for (const { mesh, index } of this.morphs.get(name)) mesh.morphTargetInfluences[index] = v;
+    }
   }
 
   /** Arme aus der T-Pose nach unten, leicht nach vorne. */
@@ -127,6 +155,7 @@ export class AvatarStage {
     if (this.vrm) {
       this.idle(this.timer.getElapsed());
       this.vrm.update(dt);
+      this.applyDirect(); // nach update, sonst überschreibt der ExpressionManager
     }
     this.renderer.render(this.scene, this.camera);
   }

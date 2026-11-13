@@ -1,6 +1,12 @@
-# Avatar Tracker v0.1
+# Avatar Tracker
 
 Gesicht per Handykamera → 3D-Avatar (VRM). Läuft komplett im Browser, keine Daten verlassen das Gerät.
+
+## Neu in v0.2
+- Mundöffnung über Lippenabstand statt jawOpen (kein Mund-Öffnen mehr beim Hochschauen)
+- VRoid-Modelle: Brauen, Augen und Mund getrennt gesteuert (keine Komplett-Emotionen mehr)
+- Kalibrierung: Neutralwert + automatisch mitwachsendes Maximum pro Kanal (⚙ → Kalibrieren)
+- ⚙ → "Werte anzeigen": Live-Balken der wichtigsten Kanäle
 
 ## Was v0.1 kann
 - Kopfdrehung (verteilt auf Rücken, Hals und Kopf)

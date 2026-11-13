@@ -34,3 +34,10 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #111318; col
 #panel input[type=range] { width: 120px; }
 #panel .file { flex-direction: column; align-items: flex-start; }
 #panel .file input { font-size: 13px; max-width: 200px; }
+
+#debug { margin: 6px 0 0; background: #0009; padding: 6px 8px; border-radius: 6px; font-size: 11px; line-height: 1.35; }
+#debug[hidden] { display: none; }
+#calib-msg { position: fixed; left: 50%; bottom: 18%; transform: translateX(-50%); z-index: 8; width: min(90vw, 360px);
+  background: #6c8cffee; color: #fff; padding: 14px 16px; border-radius: 12px; text-align: center; font-size: 16px; }
+#calib-msg[hidden] { display: none; }
+#btn-calib { font-size: 15px; padding: 10px; border-radius: 8px; border: 0; background: #6c8cff; color: #fff; }

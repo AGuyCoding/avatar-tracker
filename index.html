@@ -4,9 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#111318" />
-  <title>Avatar Tracker v0.1</title>
+  <title>Avatar Tracker</title>
   <link rel="icon" href="data:," />
-  <link rel="stylesheet" href="./style.css" />
+  <link rel="stylesheet" href="./style.css?v=0.2.0" />
   <script type="importmap">
   {
     "imports": {
@@ -25,10 +25,12 @@
   <div id="hud">
     <div id="stats">–</div>
     <div id="status">Lade Avatar…</div>
+    <pre id="debug" hidden></pre>
   </div>
+  <div id="calib-msg" hidden></div>
 
   <div id="start-overlay">
-    <h1>Avatar Tracker <small>v0.1</small></h1>
+    <h1>Avatar Tracker <small>v0.2</small></h1>
     <p>Gesicht → 3D-Avatar. Alles läuft lokal auf deinem Handy, nichts wird hochgeladen.</p>
     <button id="btn-start" disabled>Kamera starten</button>
     <p class="hint">Tipp: Handy auf Augenhöhe, Gesicht gut beleuchtet.</p>
@@ -36,6 +38,8 @@
 
   <button id="btn-menu" aria-label="Einstellungen">⚙</button>
   <div id="panel" hidden>
+    <button id="btn-calib">Kalibrieren (neutral schauen)</button>
+    <label><input type="checkbox" id="opt-debug" /> Werte anzeigen</label>
     <label><input type="checkbox" id="opt-mirror" checked /> Spiegeln</label>
     <label><input type="checkbox" id="opt-preview" checked /> Kamera-Vorschau</label>
     <label><input type="checkbox" id="opt-green" /> Greenscreen</label>
@@ -44,6 +48,6 @@
     <label class="file">Eigenes VRM laden <input type="file" id="opt-vrm" accept=".vrm" /></label>
   </div>
 
-  <script type="module" src="./src/main.js?v=0.1.0"></script>
+  <script type="module" src="./src/main.js?v=0.2.0"></script>
 </body>
 </html>

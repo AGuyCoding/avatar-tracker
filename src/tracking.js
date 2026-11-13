@@ -37,10 +37,20 @@ export async function startCamera(video) {
  * Wandelt das MediaPipe-Ergebnis in ein einfaches Objekt:
  * { blend: {name: score}, matrix: number[16] (spaltenweise, three.js-Format) } oder null.
  */
-export function parseFaceResult(res) {
+export function parseFaceResult(res, width = 1, height = 1) {
   if (!res || !res.faceBlendshapes || res.faceBlendshapes.length === 0) return null;
   const blend = {};
   for (const c of res.faceBlendshapes[0].categories) blend[c.categoryName] = c.score;
+
+  // Mundöffnung geometrisch messen: Abstand Innenlippe oben (13) / unten (14),
+  // relativ zum Augenabstand (33 / 263). Unabhängig von der Kopfneigung,
+  // anders als "jawOpen", das beim Hochschauen fälschlich ansteigt.
+  const lm = res.faceLandmarks && res.faceLandmarks[0];
+  if (lm && lm.length > 263) {
+    const d = (a, b) => Math.hypot((a.x - b.x) * width, (a.y - b.y) * height, (a.z - b.z) * width);
+    const eyes = d(lm[33], lm[263]);
+    if (eyes > 0) blend.mouthGap = d(lm[13], lm[14]) / eyes;
+  }
 
   let matrix = null;
   const m = res.facialTransformationMatrixes && res.facialTransformationMatrixes[0];
