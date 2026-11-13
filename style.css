@@ -1,0 +1,36 @@
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; overflow: hidden; background: #111318; color: #e8eaf0;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
+#stage { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; }
+
+#cam { position: fixed; right: 12px; bottom: 12px; width: 28vw; max-width: 180px; border-radius: 10px;
+  transform: scaleX(-1); opacity: .85; border: 1px solid #ffffff30; z-index: 5; }
+#cam.hidden { display: none; }
+
+#hud { position: fixed; top: env(safe-area-inset-top, 0); left: 0; padding: 8px 10px; z-index: 5;
+  font: 12px/1.4 ui-monospace, Menlo, monospace; pointer-events: none; }
+#stats { background: #0008; padding: 4px 8px; border-radius: 6px; display: inline-block; white-space: pre; }
+#status { margin-top: 4px; opacity: .8; }
+
+#start-overlay { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center;
+  justify-content: center; text-align: center; padding: 24px; background: #111318e6; z-index: 10; }
+#start-overlay h1 { margin: 0 0 8px; font-size: 26px; }
+#start-overlay small { opacity: .5; font-size: 14px; }
+#start-overlay p { max-width: 340px; opacity: .8; }
+#start-overlay .hint { font-size: 13px; opacity: .55; }
+#start-overlay.hidden { display: none; }
+#btn-start { font-size: 18px; padding: 14px 28px; border-radius: 999px; border: 0; background: #6c8cff;
+  color: #fff; margin: 16px 0; }
+#btn-start:disabled { background: #444a; color: #fff8; }
+
+#btn-menu { position: fixed; top: calc(env(safe-area-inset-top, 0px) + 8px); right: 10px; z-index: 6;
+  width: 44px; height: 44px; border-radius: 50%; border: 0; background: #0008; color: #fff; font-size: 22px; }
+#panel { position: fixed; top: calc(env(safe-area-inset-top, 0px) + 60px); right: 10px; z-index: 6;
+  background: #1b1e26f2; border: 1px solid #ffffff20; border-radius: 12px; padding: 12px 14px;
+  display: flex; flex-direction: column; gap: 12px; min-width: 220px; font-size: 15px; }
+#panel[hidden] { display: none; }
+#panel label { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+#panel input[type=checkbox] { width: 22px; height: 22px; }
+#panel input[type=range] { width: 120px; }
+#panel .file { flex-direction: column; align-items: flex-start; }
+#panel .file input { font-size: 13px; max-width: 200px; }

@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#111318" />
+  <title>Avatar Tracker v0.1</title>
+  <link rel="icon" href="data:," />
+  <link rel="stylesheet" href="./style.css" />
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.187.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.187.0/examples/jsm/",
+      "@pixiv/three-vrm": "https://cdn.jsdelivr.net/npm/@pixiv/three-vrm@3.5.5/lib/three-vrm.module.min.js",
+      "@mediapipe/tasks-vision": "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.2.3/vision_bundle.mjs"
+    }
+  }
+  </script>
+</head>
+<body>
+  <canvas id="stage"></canvas>
+  <video id="cam" playsinline muted></video>
+
+  <div id="hud">
+    <div id="stats">–</div>
+    <div id="status">Lade Avatar…</div>
+  </div>
+
+  <div id="start-overlay">
+    <h1>Avatar Tracker <small>v0.1</small></h1>
+    <p>Gesicht → 3D-Avatar. Alles läuft lokal auf deinem Handy, nichts wird hochgeladen.</p>
+    <button id="btn-start" disabled>Kamera starten</button>
+    <p class="hint">Tipp: Handy auf Augenhöhe, Gesicht gut beleuchtet.</p>
+  </div>
+
+  <button id="btn-menu" aria-label="Einstellungen">⚙</button>
+  <div id="panel" hidden>
+    <label><input type="checkbox" id="opt-mirror" checked /> Spiegeln</label>
+    <label><input type="checkbox" id="opt-preview" checked /> Kamera-Vorschau</label>
+    <label><input type="checkbox" id="opt-green" /> Greenscreen</label>
+    <label>Glättung <input type="range" id="opt-smooth" min="0.2" max="5" step="0.1" value="3.5" /></label>
+    <label>Reaktion <input type="range" id="opt-beta" min="0" max="3" step="0.05" value="0.8" /></label>
+    <label class="file">Eigenes VRM laden <input type="file" id="opt-vrm" accept=".vrm" /></label>
+  </div>
+
+  <script type="module" src="./src/main.js?v=0.1.0"></script>
+</body>
+</html>
