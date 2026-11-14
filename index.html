@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#111318" />
   <title>Avatar Tracker</title>
   <link rel="icon" href="data:," />
-  <link rel="stylesheet" href="./style.css?v=0.3.0" />
+  <link rel="stylesheet" href="./style.css?v=0.4.0" />
   <script type="importmap">
   {
     "imports": {
@@ -30,7 +30,7 @@
   <div id="calib-msg" hidden></div>
 
   <div id="start-overlay">
-    <h1>Avatar Tracker <small>v0.3</small></h1>
+    <h1>Avatar Tracker <small>v0.4</small></h1>
     <p>Gesicht → 3D-Avatar. Alles läuft lokal auf deinem Handy, nichts wird hochgeladen.</p>
     <button id="btn-start" disabled>Kamera starten</button>
     <p class="hint">Tipp: Handy auf Augenhöhe, Gesicht gut beleuchtet.</p>
@@ -38,6 +38,15 @@
 
   <button id="btn-menu" aria-label="Einstellungen">⚙</button>
   <div id="panel" hidden>
+    <label>Avatar <select id="opt-avatar">
+      <option value="mesh">Mesh-Gesicht (1:1)</option>
+      <option value="vrm">VRoid-Modell</option>
+    </select></label>
+    <label>Stil <select id="opt-meshstyle">
+      <option value="both">Draht + Fläche</option>
+      <option value="wire">Nur Draht</option>
+      <option value="solid">Nur Fläche</option>
+    </select></label>
     <button id="btn-calib">Kalibrieren (neutral schauen)</button>
     <label><input type="checkbox" id="opt-debug" /> Werte anzeigen</label>
     <label><input type="checkbox" id="opt-mirror" checked /> Spiegeln</label>
@@ -48,6 +57,6 @@
     <label class="file">Eigenes VRM laden <input type="file" id="opt-vrm" accept=".vrm" /></label>
   </div>
 
-  <script type="module" src="./src/main.js?v=0.3.0"></script>
+  <script type="module" src="./src/main.js?v=0.4.0"></script>
 </body>
 </html>

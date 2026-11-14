@@ -58,11 +58,12 @@ export class AvatarStage {
     }
     this.vrm = vrm;
     this.scene.add(vrm.scene);
+    vrm.scene.visible = this.avatarMode !== 'mesh';
 
     if (vrm.lookAt) { vrm.lookAt.autoUpdate = false; vrm.lookAt.target = null; }
 
     this.restPose();
-    this.frameBust();
+    this.frame();
     this.expressionNames = new Set(
       (vrm.expressionManager?.expressions || []).map((e) => e.expressionName),
     );
@@ -110,6 +111,23 @@ export class AvatarStage {
     set('rightLowerArm', 0, 0.35, 0);
   }
 
+  /** Zwischen VRM-Modell und Mesh-Gesicht umschalten. */
+  setAvatarMode(mode) {
+    this.avatarMode = mode;
+    if (this.vrm) this.vrm.scene.visible = mode !== 'mesh';
+    if (this.faceMesh) this.faceMesh.group.visible = mode === 'mesh';
+    this.frame();
+  }
+
+  frame() {
+    if (this.avatarMode === 'mesh') {
+      this.camera.position.set(0, 0, 0.42);
+      this.camera.lookAt(0, 0, 0);
+    } else if (this.vrm) {
+      this.frameBust();
+    }
+  }
+
   /** Kamera auf Kopf/Oberkörper ausrichten (Sitz-Stream-Ausschnitt). */
   frameBust() {
     this.vrm.scene.updateMatrixWorld(true);
@@ -152,7 +170,7 @@ export class AvatarStage {
   render() {
     this.timer.update();
     const dt = Math.min(this.timer.getDelta(), 0.1);
-    if (this.vrm) {
+    if (this.vrm && this.vrm.scene.visible) {
       this.idle(this.timer.getElapsed());
       this.vrm.update(dt);
       this.applyDirect(); // nach update, sonst überschreibt der ExpressionManager

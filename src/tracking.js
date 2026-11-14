@@ -83,5 +83,5 @@ export function parseFaceResult(res, width = 1, height = 1) {
       matrix = t;
     }
   }
-  return { blend, matrix };
+  return { blend, matrix, landmarks: lm || null };
 }

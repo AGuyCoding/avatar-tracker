@@ -2,6 +2,10 @@
 
 Gesicht per Handykamera → 3D-Avatar (VRM). Läuft komplett im Browser, keine Daten verlassen das Gerät.
 
+## Neu in v0.4
+- Eigenes **Mesh-Gesicht**: MediaPipe-Gesichtsnetz (Apache 2.0), direkt aus den 478 Punkten aufgebaut → jede Bewegung 1:1, auch einseitig
+- ⚙ → Avatar: Mesh-Gesicht / VRoid-Modell, Stil: Draht + Fläche / Nur Draht / Nur Fläche (wird gemerkt)
+
 ## Neu in v0.3
 - Zwinkern mit einzelnen Augen (Lidabstand pro Auge statt gekoppelter eyeBlink-Werte)
 - Mundwinkel runter (geometrisch gemessen) → nach unten gebogener Mund

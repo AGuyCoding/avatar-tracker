@@ -41,3 +41,4 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #111318; col
   background: #6c8cffee; color: #fff; padding: 14px 16px; border-radius: 12px; text-align: center; font-size: 16px; }
 #calib-msg[hidden] { display: none; }
 #btn-calib { font-size: 15px; padding: 10px; border-radius: 8px; border: 0; background: #6c8cff; color: #fff; }
+#panel select { font-size: 15px; padding: 4px; border-radius: 6px; background: #2a2f3a; color: #fff; border: 1px solid #ffffff30; }

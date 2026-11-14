@@ -1,10 +1,11 @@
-import { AvatarStage } from './avatar.js?v=0.3.0';
-import { createFaceTracker, startCamera, parseFaceResult } from './tracking.js?v=0.3.0';
-import { mapVroid, mapPresets, mapPerfectSync, countPerfectSync, mapGaze, headEuler, ARKIT_NAMES } from './mapping.js?v=0.3.0';
-import { FilterBank, filterSettings } from './filters.js?v=0.3.0';
-import { Calibrator } from './calib.js?v=0.3.0';
+import { AvatarStage } from './avatar.js?v=0.4.0';
+import { createFaceTracker, startCamera, parseFaceResult } from './tracking.js?v=0.4.0';
+import { mapVroid, mapPresets, mapPerfectSync, countPerfectSync, mapGaze, headEuler, ARKIT_NAMES } from './mapping.js?v=0.4.0';
+import { FilterBank, filterSettings } from './filters.js?v=0.4.0';
+import { Calibrator } from './calib.js?v=0.4.0';
+import { FaceMeshAvatar } from './facemesh.js?v=0.4.0';
 
-export const VERSION = 'v0.3.0';
+export const VERSION = 'v0.4.0';
 
 // Offizielles pixiv-Beispielmodell (Weitergabe/Änderung erlaubt, Credit nicht nötig)
 const DEFAULT_VRM =
@@ -29,7 +30,17 @@ const state = {
   stats: { renderFrames: 0, trackFrames: 0, detectMs: 0, lastStatAt: performance.now() },
 };
 
+const UI_KEY = 'avatar-tracker.ui.v1';
+let ui = { avatar: 'mesh', meshStyle: 'both' };
+try { ui = { ...ui, ...JSON.parse(localStorage.getItem(UI_KEY) || '{}') }; } catch {}
+const saveUi = () => { try { localStorage.setItem(UI_KEY, JSON.stringify(ui)); } catch {} };
+
 const stage = new AvatarStage(canvas);
+const faceMesh = new FaceMeshAvatar();
+stage.faceMesh = faceMesh;
+stage.scene.add(faceMesh.group);
+faceMesh.setStyle(ui.meshStyle);
+stage.setAvatarMode(ui.avatar);
 const filters = new FilterBank(filterSettings);
 const calib = new Calibrator();
 
@@ -52,6 +63,10 @@ async function loadAvatar(url) {
 const CHANNELS = [...ARKIT_NAMES, 'mouthGap', 'eyeCloseGeoLeft', 'eyeCloseGeoRight', 'mouthCornerDown'];
 
 function applyFace(face, tSec) {
+  if (ui.avatar === 'mesh') {
+    faceMesh.update(face.landmarks, face.width, face.height, state.mirror, tSec);
+    return;
+  }
   if (!stage.vrm) return;
   const f = (name, v) => filters.filter(name, v, tSec);
 
@@ -108,6 +123,8 @@ function track() {
 
   const face = parseFaceResult(res, video.videoWidth, video.videoHeight);
   if (face) {
+    face.width = video.videoWidth;
+    face.height = video.videoHeight;
     state.lastFaceAt = now;
     applyFace(face, now / 1000);
   }
@@ -117,6 +134,11 @@ function track() {
 async function calibrate() {
   const msg = $('calib-msg');
   msg.hidden = false;
+  if (ui.avatar === 'mesh') {
+    msg.textContent = 'Das Mesh-Gesicht braucht keine Kalibrierung – es nutzt deine Gesichtspunkte direkt.';
+    setTimeout(() => { msg.hidden = true; }, 3000);
+    return;
+  }
   msg.textContent = 'Neutral schauen… (entspannt, Mund zu)';
   await calib.start(1500);
   msg.textContent = 'Fertig! Jetzt einmal alles maximal: Brauen hoch/runter, Mund weit auf, breit lächeln.';
@@ -140,7 +162,7 @@ function updateStats() {
   const faceOk = now - state.lastFaceAt < 300;
   statsEl.textContent =
     `${VERSION} | Render ${(s.renderFrames / dt).toFixed(0)} fps | Track ${(s.trackFrames / dt).toFixed(0)} fps\n` +
-    `Erkennung ${s.detectMs.toFixed(1)} ms | ${state.delegate} | ${state.mode} | ${faceOk ? 'Gesicht ✓' : 'kein Gesicht'}`;
+    `Erkennung ${s.detectMs.toFixed(1)} ms | ${state.delegate} | ${ui.avatar === 'mesh' ? 'Mesh-Gesicht' : state.mode} | ${faceOk ? 'Gesicht ✓' : 'kein Gesicht'}`;
   s.renderFrames = 0; s.trackFrames = 0; s.lastStatAt = now;
 
   if (state.showDebug) {
@@ -173,7 +195,7 @@ $('btn-start').addEventListener('click', async () => {
     state.delegate = delegate;
     $('start-overlay').classList.add('hidden');
     setStatus('');
-    if (!calib.calibrated) setTimeout(calibrate, 800);
+    if (!calib.calibrated && ui.avatar !== 'mesh') setTimeout(calibrate, 800);
   } catch (err) {
     console.error(err);
     $('btn-start').disabled = false;
@@ -183,6 +205,10 @@ $('btn-start').addEventListener('click', async () => {
 
 $('btn-menu').addEventListener('click', () => { $('panel').hidden = !$('panel').hidden; });
 $('btn-calib').addEventListener('click', () => { $('panel').hidden = true; calibrate(); });
+$('opt-avatar').value = ui.avatar;
+$('opt-meshstyle').value = ui.meshStyle;
+$('opt-avatar').addEventListener('change', (e) => { ui.avatar = e.target.value; saveUi(); stage.setAvatarMode(ui.avatar); });
+$('opt-meshstyle').addEventListener('change', (e) => { ui.meshStyle = e.target.value; saveUi(); faceMesh.setStyle(ui.meshStyle); });
 $('opt-mirror').addEventListener('change', (e) => { state.mirror = e.target.checked; });
 $('opt-preview').addEventListener('change', (e) => video.classList.toggle('hidden', !e.target.checked));
 $('opt-green').addEventListener('change', (e) => stage.setGreenscreen(e.target.checked));
@@ -206,4 +232,4 @@ loadAvatar(params.get('vrm') || DEFAULT_VRM).then(() => { $('btn-start').disable
 loop();
 
 // Für Tests/Debugging in der Konsole
-window.__avatar = { stage, state, applyFace, calib };
+window.__avatar = { stage, state, applyFace, calib, faceMesh, ui };
