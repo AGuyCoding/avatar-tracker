@@ -5,10 +5,10 @@ const FACE_MODEL =
   'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task';
 
 /** Erstellt den Face Landmarker. Versucht GPU, fällt sonst auf CPU zurück. */
-export async function createFaceTracker() {
-  const fileset = await FilesetResolver.forVisionTasks(WASM_BASE);
+export async function createFaceTracker({ wasmBase = WASM_BASE, modelPath = FACE_MODEL } = {}) {
+  const fileset = await FilesetResolver.forVisionTasks(wasmBase);
   const options = (delegate) => ({
-    baseOptions: { modelAssetPath: FACE_MODEL, delegate },
+    baseOptions: { modelAssetPath: modelPath, delegate },
     runningMode: 'VIDEO',
     numFaces: 1,
     outputFaceBlendshapes: true,

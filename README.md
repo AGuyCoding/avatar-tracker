@@ -2,6 +2,12 @@
 
 Gesicht per Handykamera → 3D-Avatar (VRM). Läuft komplett im Browser, keine Daten verlassen das Gerät.
 
+## Neu in v0.5
+- Mesh-Gesicht: Lider schließen beim Zwinkern vollständig (Öffnung relativ zum eigenen Auge gemessen)
+- Mesh-Gesicht: dicke Linien für Brauen, Augen und Lippen → Mimik viel besser lesbar, größerer Bildausschnitt
+- VRoid: Regler "Mimik-Stärke" (verstärkt die dezenten Formen des Modells)
+- Getestet mit einem echten Video Bild für Bild durch die Erkennung
+
 ## Neu in v0.4
 - Eigenes **Mesh-Gesicht**: MediaPipe-Gesichtsnetz (Apache 2.0), direkt aus den 478 Punkten aufgebaut → jede Bewegung 1:1, auch einseitig
 - ⚙ → Avatar: Mesh-Gesicht / VRoid-Modell, Stil: Draht + Fläche / Nur Draht / Nur Fläche (wird gemerkt)

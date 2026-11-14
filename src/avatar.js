@@ -38,6 +38,7 @@ export class AvatarStage {
     // Hochformat: etwas weiter weg, damit Schultern + Hände ins Bild passen
     this.camera.fov = w < h ? 34 : 24;
     this.camera.updateProjectionMatrix();
+    if (this.avatarMode === 'mesh') this.frame();
   }
 
   async load(url) {
@@ -121,7 +122,7 @@ export class AvatarStage {
 
   frame() {
     if (this.avatarMode === 'mesh') {
-      this.camera.position.set(0, 0, 0.42);
+      this.camera.position.set(0, 0, this.camera.aspect < 1 ? 0.34 : 0.3);
       this.camera.lookAt(0, 0, 0);
     } else if (this.vrm) {
       this.frameBust();

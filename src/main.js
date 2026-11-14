@@ -1,11 +1,11 @@
-import { AvatarStage } from './avatar.js?v=0.4.1';
-import { createFaceTracker, startCamera, parseFaceResult } from './tracking.js?v=0.4.1';
-import { mapVroid, mapPresets, mapPerfectSync, countPerfectSync, mapGaze, headEuler, ARKIT_NAMES } from './mapping.js?v=0.4.1';
-import { FilterBank, filterSettings } from './filters.js?v=0.4.1';
-import { Calibrator } from './calib.js?v=0.4.1';
-import { FaceMeshAvatar } from './facemesh.js?v=0.4.1';
+import { AvatarStage } from './avatar.js?v=0.5.0';
+import { createFaceTracker, startCamera, parseFaceResult } from './tracking.js?v=0.5.0';
+import { mapVroid, mapPresets, mapPerfectSync, countPerfectSync, mapGaze, headEuler, ARKIT_NAMES } from './mapping.js?v=0.5.0';
+import { FilterBank, filterSettings } from './filters.js?v=0.5.0';
+import { Calibrator } from './calib.js?v=0.5.0';
+import { FaceMeshAvatar } from './facemesh.js?v=0.5.0';
 
-export const VERSION = 'v0.4.1';
+export const VERSION = 'v0.5.0';
 
 // Offizielles pixiv-Beispielmodell (Weitergabe/Änderung erlaubt, Credit nicht nötig)
 const DEFAULT_VRM =
@@ -31,7 +31,7 @@ const state = {
 };
 
 const UI_KEY = 'avatar-tracker.ui.v1';
-let ui = { avatar: 'mesh', meshStyle: 'both' };
+let ui = { avatar: 'mesh', meshStyle: 'both', gain: 1.6 };
 try { ui = { ...ui, ...JSON.parse(localStorage.getItem(UI_KEY) || '{}') }; } catch {}
 const saveUi = () => { try { localStorage.setItem(UI_KEY, JSON.stringify(ui)); } catch {} };
 
@@ -87,7 +87,11 @@ function applyFace(face, tSec) {
   if (state.mode === 'PerfectSync') {
     for (const [k, v] of Object.entries(mapPerfectSync(N, state.mirror, stage.expressionNames))) stage.setExpression(k, v);
   } else if (state.mode === 'VRoid') {
-    for (const [k, v] of Object.entries(mapVroid(N, state.mirror))) stage.setMorph(k, v);
+    // Mimik-Stärke: VRoid-Formen sind dezent, Werte > 1 übertreiben sie.
+    // Augen-Schließen nicht verstärken (sonst Verformung).
+    for (const [k, v] of Object.entries(mapVroid(N, state.mirror))) {
+      stage.setMorph(k, k.startsWith('Fcl_EYE_Close') ? v : v * ui.gain);
+    }
   } else {
     for (const [k, v] of Object.entries(mapPresets(N, state.mirror))) stage.setExpression(k, v);
   }
@@ -176,6 +180,7 @@ function updateStats() {
 
 function loop() {
   requestAnimationFrame(loop);
+  if (state.paused) return; // für automatisierte Tests
   try { track(); } catch (err) { console.error(err); }
   if (state.tracker && performance.now() - state.lastFaceAt > 500) relax();
   stage.render();
@@ -206,6 +211,8 @@ $('btn-start').addEventListener('click', async () => {
 $('btn-menu').addEventListener('click', () => { $('panel').hidden = !$('panel').hidden; });
 $('btn-calib').addEventListener('click', () => { $('panel').hidden = true; calibrate(); });
 $('opt-avatar').value = ui.avatar;
+$('opt-gain').value = ui.gain;
+$('opt-gain').addEventListener('input', (e) => { ui.gain = parseFloat(e.target.value); saveUi(); });
 $('opt-meshstyle').value = ui.meshStyle;
 $('opt-avatar').addEventListener('change', (e) => { ui.avatar = e.target.value; saveUi(); stage.setAvatarMode(ui.avatar); });
 $('opt-meshstyle').addEventListener('change', (e) => { ui.meshStyle = e.target.value; saveUi(); faceMesh.setStyle(ui.meshStyle); });

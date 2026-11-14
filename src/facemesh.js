@@ -1,6 +1,9 @@
 import * as THREE from 'three';
-import { OneEuro, filterSettings } from './filters.js?v=0.4.1';
-import { FACE_TRIANGLES } from './facemesh-data.js?v=0.4.1';
+import { LineSegments2 } from 'three/addons/lines/LineSegments2.js';
+import { LineSegmentsGeometry } from 'three/addons/lines/LineSegmentsGeometry.js';
+import { LineMaterial } from 'three/addons/lines/LineMaterial.js';
+import { OneEuro, filterSettings } from './filters.js?v=0.5.0';
+import { FACE_TRIANGLES } from './facemesh-data.js?v=0.5.0';
 
 // Eigenes "Mesh-Gesicht": das MediaPipe-Gesichtsnetz wird direkt aus den
 // 478 erkannten Punkten aufgebaut. Keine Ausdrucks-Übersetzung dazwischen:
@@ -10,6 +13,19 @@ const N_POINTS = 478; // 468 Gesicht + 2×5 Iris
 const IRIS = [468, 473]; // Iris-Mitte: 468 = rechtes Auge des Nutzers, 473 = linkes
 // Je Auge: Oberlid, Unterlid, Augenwinkel, Augenwinkel
 const EYE_LIDS = [[159, 145, 33, 133], [386, 374, 362, 263]];
+// Lid-Punktpaare (oben, unten) je Auge – zum vollständigen Schließen
+const LID_PAIRS = [
+  [[246, 7], [161, 163], [160, 144], [159, 145], [158, 153], [157, 154], [173, 155]],
+  [[466, 249], [388, 390], [387, 373], [386, 374], [385, 380], [384, 381], [398, 382]],
+];
+// Hervorgehobene Linien: Brauen, Lippen, Augen (machen Mimik lesbar)
+const FEATURE_LINES = [
+  [70, 63, 105, 66, 107], [336, 296, 334, 293, 300], // Brauen
+  [61, 185, 40, 39, 37, 0, 267, 269, 270, 409, 291, 375, 321, 405, 314, 17, 84, 181, 91, 146, 61], // Lippen außen
+  [78, 191, 80, 81, 82, 13, 312, 311, 310, 415, 308, 324, 318, 402, 317, 14, 87, 178, 88, 95, 78], // Lippen innen
+  [33, 246, 161, 160, 159, 158, 157, 173, 133, 155, 154, 153, 145, 144, 163, 7, 33], // rechtes Auge
+  [263, 466, 388, 387, 386, 385, 384, 398, 362, 382, 381, 380, 374, 373, 390, 249, 263], // linkes Auge
+];
 const EYE_DIST = 0.065; // Augenabstand in Weltkoordinaten (~6,5 cm)
 
 export const MESH_STYLES = ['both', 'wire', 'solid'];
@@ -48,6 +64,20 @@ export class FaceMeshAvatar {
       return ring;
     });
 
+    // Feature-Linien als dicke Linien (Brauen, Lippen, Augen) – liegen sonst
+    // genau auf den Drahtgitter-Kanten und wären nicht unterscheidbar.
+    this.lineIdx = [];
+    for (const line of FEATURE_LINES) for (let i = 0; i < line.length - 1; i++) this.lineIdx.push(line[i], line[i + 1]);
+    this.linePos = new Float32Array(this.lineIdx.length * 3);
+    this.lineGeo = new LineSegmentsGeometry();
+    this.lineGeo.setPositions(this.linePos);
+    this.lineMat = new LineMaterial({ color: 0xffffff, linewidth: 2.5, transparent: true, depthTest: true });
+    this.features = new LineSegments2(this.lineGeo, this.lineMat);
+    this.features.renderOrder = 10;
+    this.features.frustumCulled = false;
+    this.group.add(this.features);
+
+    this.openRef = [0.25, 0.25]; // persönliche "Auge offen"-Referenz je Auge
     this.group.visible = false;
     this.setStyle('both');
   }
@@ -55,6 +85,7 @@ export class FaceMeshAvatar {
   setStyle(style) {
     this.style = style;
     this.solid.visible = style !== 'wire';
+    this.lineMat.color.set(style === 'solid' ? 0x9ff8ff : 0xffffff);
     this.wire.visible = style !== 'solid';
     this.wire.material.opacity = style === 'wire' ? 0.9 : 0.55;
   }
@@ -85,18 +116,43 @@ export class FaceMeshAvatar {
       p[k + 1] = this.filters[k + 1].filter(y, tSec);
       p[k + 2] = this.filters[k + 2].filter(z, tSec);
     }
+    // Augenöffnung relativ zum eigenen "offen"-Wert. MediaPipe schließt die
+    // Lidpunkte beim Zwinkern nie ganz (nur ~50 %), deshalb relativ messen
+    // und das Lid im Mesh dann vollständig schließen.
+    const dist = (i, j) => Math.hypot(p[i * 3] - p[j * 3], p[i * 3 + 1] - p[j * 3 + 1], p[i * 3 + 2] - p[j * 3 + 2]);
+    const kEye = EYE_LIDS.map(([up, low, c1, c2], n) => {
+      const open = dist(up, low) / (dist(c1, c2) || 1);
+      this.openRef[n] = Math.max(this.openRef[n] * 0.996, open);
+      const rel = open / this.openRef[n];
+      return Math.min(1, Math.max(0, (rel - 0.55) / (0.85 - 0.55)));
+    });
+    LID_PAIRS.forEach((pairs, n) => {
+      const close = 1 - kEye[n];
+      if (close <= 0) return;
+      for (const [u, l] of pairs) {
+        for (let a = 0; a < 3; a++) {
+          const lo = p[l * 3 + a], up = p[u * 3 + a];
+          const mid = lo + (up - lo) * 0.3; // Lider treffen sich knapp über dem Unterlid
+          p[u * 3 + a] = up + (mid - up) * close;
+          p[l * 3 + a] = lo + (mid - lo) * close;
+        }
+      }
+    });
+
     this.geometry.attributes.position.needsUpdate = true;
+    this.lineIdx.forEach((v, j) => {
+      this.linePos[j * 3] = p[v * 3]; this.linePos[j * 3 + 1] = p[v * 3 + 1]; this.linePos[j * 3 + 2] = p[v * 3 + 2] + 0.0008;
+    });
+    this.lineGeo.setPositions(this.linePos);
     this.geometry.computeVertexNormals();
     this.geometry.computeBoundingSphere();
 
     // Iris: Mitte + Radius aus den 4 Randpunkten.
     // Höhe folgt der Lidöffnung, damit ein geschlossenes Auge nicht "rund" bleibt.
-    const dist = (i, j) => Math.hypot(p[i * 3] - p[j * 3], p[i * 3 + 1] - p[j * 3 + 1], p[i * 3 + 2] - p[j * 3 + 2]);
     IRIS.forEach((c, n) => {
       const ring = this.irises[n];
-      const [up, low, c1, c2] = EYE_LIDS[n];
-      const open = dist(up, low) / (dist(c1, c2) || 1);
-      const k = Math.min(1, Math.max(0, (open - 0.09) / (0.24 - 0.09)));
+      const [up, low] = EYE_LIDS[n];
+      const k = kEye[n];
       const e = (c + 1) * 3;
       const r = Math.hypot(p[e] - p[c * 3], p[e + 1] - p[c * 3 + 1]) || 0.005;
       // Mitte zwischen den Lidern halten, wenn das Auge sich schließt
