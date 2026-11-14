@@ -1,11 +1,11 @@
-import { AvatarStage } from './avatar.js?v=0.4.0';
-import { createFaceTracker, startCamera, parseFaceResult } from './tracking.js?v=0.4.0';
-import { mapVroid, mapPresets, mapPerfectSync, countPerfectSync, mapGaze, headEuler, ARKIT_NAMES } from './mapping.js?v=0.4.0';
-import { FilterBank, filterSettings } from './filters.js?v=0.4.0';
-import { Calibrator } from './calib.js?v=0.4.0';
-import { FaceMeshAvatar } from './facemesh.js?v=0.4.0';
+import { AvatarStage } from './avatar.js?v=0.4.1';
+import { createFaceTracker, startCamera, parseFaceResult } from './tracking.js?v=0.4.1';
+import { mapVroid, mapPresets, mapPerfectSync, countPerfectSync, mapGaze, headEuler, ARKIT_NAMES } from './mapping.js?v=0.4.1';
+import { FilterBank, filterSettings } from './filters.js?v=0.4.1';
+import { Calibrator } from './calib.js?v=0.4.1';
+import { FaceMeshAvatar } from './facemesh.js?v=0.4.1';
 
-export const VERSION = 'v0.4.0';
+export const VERSION = 'v0.4.1';
 
 // Offizielles pixiv-Beispielmodell (Weitergabe/Änderung erlaubt, Credit nicht nötig)
 const DEFAULT_VRM =

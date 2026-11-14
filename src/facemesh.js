@@ -1,13 +1,15 @@
 import * as THREE from 'three';
-import { OneEuro, filterSettings } from './filters.js?v=0.4.0';
-import { FACE_TRIANGLES } from './facemesh-data.js?v=0.4.0';
+import { OneEuro, filterSettings } from './filters.js?v=0.4.1';
+import { FACE_TRIANGLES } from './facemesh-data.js?v=0.4.1';
 
 // Eigenes "Mesh-Gesicht": das MediaPipe-Gesichtsnetz wird direkt aus den
 // 478 erkannten Punkten aufgebaut. Keine Ausdrucks-Übersetzung dazwischen:
 // jede Bewegung, die die Kamera sieht, ist 1:1 sichtbar (auch einseitig).
 
 const N_POINTS = 478; // 468 Gesicht + 2×5 Iris
-const IRIS = [468, 473]; // Mittelpunkte der beiden Iris
+const IRIS = [468, 473]; // Iris-Mitte: 468 = rechtes Auge des Nutzers, 473 = linkes
+// Je Auge: Oberlid, Unterlid, Augenwinkel, Augenwinkel
+const EYE_LIDS = [[159, 145, 33, 133], [386, 374, 362, 263]];
 const EYE_DIST = 0.065; // Augenabstand in Weltkoordinaten (~6,5 cm)
 
 export const MESH_STYLES = ['both', 'wire', 'solid'];
@@ -87,13 +89,21 @@ export class FaceMeshAvatar {
     this.geometry.computeVertexNormals();
     this.geometry.computeBoundingSphere();
 
-    // Iris: Mitte + Radius aus den 4 Randpunkten
+    // Iris: Mitte + Radius aus den 4 Randpunkten.
+    // Höhe folgt der Lidöffnung, damit ein geschlossenes Auge nicht "rund" bleibt.
+    const dist = (i, j) => Math.hypot(p[i * 3] - p[j * 3], p[i * 3 + 1] - p[j * 3 + 1], p[i * 3 + 2] - p[j * 3 + 2]);
     IRIS.forEach((c, n) => {
       const ring = this.irises[n];
-      ring.position.set(p[c * 3], p[c * 3 + 1], p[c * 3 + 2] + 0.002);
+      const [up, low, c1, c2] = EYE_LIDS[n];
+      const open = dist(up, low) / (dist(c1, c2) || 1);
+      const k = Math.min(1, Math.max(0, (open - 0.09) / (0.24 - 0.09)));
       const e = (c + 1) * 3;
       const r = Math.hypot(p[e] - p[c * 3], p[e + 1] - p[c * 3 + 1]) || 0.005;
-      ring.scale.setScalar(r);
+      // Mitte zwischen den Lidern halten, wenn das Auge sich schließt
+      const midY = (p[up * 3 + 1] + p[low * 3 + 1]) / 2;
+      ring.position.set(p[c * 3], p[c * 3 + 1] * k + midY * (1 - k), p[c * 3 + 2] + 0.002);
+      ring.scale.set(r, r * k, 1);
+      ring.visible = k > 0.08;
     });
     this.hasData = true;
   }
