@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#111318" />
   <title>Avatar Tracker</title>
   <link rel="icon" href="data:," />
-  <link rel="stylesheet" href="./style.css?v=0.5.0" />
+  <link rel="stylesheet" href="./style.css?v=0.5.1" />
   <script type="importmap">
   {
     "imports": {
@@ -58,6 +58,13 @@
     <label class="file">Eigenes VRM laden <input type="file" id="opt-vrm" accept=".vrm" /></label>
   </div>
 
-  <script type="module" src="./src/main.js?v=0.5.0"></script>
+  <script>
+    // Falls ein Modul (z. B. vom CDN) nicht lädt: sichtbar machen
+    window.addEventListener('error', (e) => {
+      const s = document.getElementById('status');
+      if (s) s.textContent = 'Fehler: ' + (e.message || ('Datei nicht geladen: ' + (e.target && e.target.src || '?')));
+    }, true);
+  </script>
+  <script type="module" src="./src/main.js?v=0.5.1"></script>
 </body>
 </html>

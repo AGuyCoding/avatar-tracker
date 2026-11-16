@@ -1,11 +1,11 @@
-import { AvatarStage } from './avatar.js?v=0.5.0';
-import { createFaceTracker, startCamera, parseFaceResult } from './tracking.js?v=0.5.0';
-import { mapVroid, mapPresets, mapPerfectSync, countPerfectSync, mapGaze, headEuler, ARKIT_NAMES } from './mapping.js?v=0.5.0';
-import { FilterBank, filterSettings } from './filters.js?v=0.5.0';
-import { Calibrator } from './calib.js?v=0.5.0';
-import { FaceMeshAvatar } from './facemesh.js?v=0.5.0';
+import { AvatarStage } from './avatar.js?v=0.5.1';
+import { createFaceTracker, startCamera, parseFaceResult } from './tracking.js?v=0.5.1';
+import { mapVroid, mapPresets, mapPerfectSync, countPerfectSync, mapGaze, headEuler, ARKIT_NAMES } from './mapping.js?v=0.5.1';
+import { FilterBank, filterSettings } from './filters.js?v=0.5.1';
+import { Calibrator } from './calib.js?v=0.5.1';
+import { FaceMeshAvatar } from './facemesh.js?v=0.5.1';
 
-export const VERSION = 'v0.5.0';
+export const VERSION = 'v0.5.1';
 
 // Offizielles pixiv-Beispielmodell (Weitergabe/Änderung erlaubt, Credit nicht nötig)
 const DEFAULT_VRM =
@@ -35,6 +35,10 @@ let ui = { avatar: 'mesh', meshStyle: 'both', gain: 1.6 };
 try { ui = { ...ui, ...JSON.parse(localStorage.getItem(UI_KEY) || '{}') }; } catch {}
 const saveUi = () => { try { localStorage.setItem(UI_KEY, JSON.stringify(ui)); } catch {} };
 
+// Fehler sichtbar machen statt still zu scheitern
+window.addEventListener('error', (e) => setStatus('Fehler: ' + (e.message || e.error)));
+window.addEventListener('unhandledrejection', (e) => setStatus('Fehler: ' + (e.reason?.message || e.reason)));
+
 const stage = new AvatarStage(canvas);
 const faceMesh = new FaceMeshAvatar();
 stage.faceMesh = faceMesh;
@@ -47,15 +51,15 @@ const calib = new Calibrator();
 function setStatus(t) { statusEl.textContent = t; }
 
 async function loadAvatar(url) {
-  setStatus('Lade Avatar…');
+  setStatus(ui.avatar === 'mesh' ? '' : 'Lade VRoid-Modell…');
   try {
     await stage.load(url);
     const ps = countPerfectSync(stage.expressionNames);
     state.mode = ps >= 20 ? 'PerfectSync' : stage.isVroid ? 'VRoid' : 'Standard';
-    setStatus('Avatar bereit');
+    if (ui.avatar !== 'mesh') setStatus('VRoid-Modell bereit');
   } catch (err) {
     console.error(err);
-    setStatus('Avatar-Fehler: ' + err.message);
+    if (ui.avatar !== 'mesh') setStatus('VRoid-Modell konnte nicht laden: ' + err.message);
   }
 }
 
@@ -235,7 +239,10 @@ filterSettings.minCutoff = 5.2 - parseFloat($('opt-smooth').value);
 filterSettings.beta = parseFloat($('opt-beta').value);
 
 const params = new URLSearchParams(location.search);
-loadAvatar(params.get('vrm') || DEFAULT_VRM).then(() => { $('btn-start').disabled = false; });
+// Start-Button sofort freigeben: das Mesh-Gesicht braucht kein Modell,
+// das VRoid-Modell lädt im Hintergrund weiter.
+$('btn-start').disabled = false;
+loadAvatar(params.get('vrm') || DEFAULT_VRM);
 loop();
 
 // Für Tests/Debugging in der Konsole
