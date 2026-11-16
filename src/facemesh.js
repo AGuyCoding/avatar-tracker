@@ -2,8 +2,8 @@ import * as THREE from 'three';
 import { LineSegments2 } from 'three/addons/lines/LineSegments2.js';
 import { LineSegmentsGeometry } from 'three/addons/lines/LineSegmentsGeometry.js';
 import { LineMaterial } from 'three/addons/lines/LineMaterial.js';
-import { OneEuro, filterSettings } from './filters.js?v=0.5.1';
-import { FACE_TRIANGLES } from './facemesh-data.js?v=0.5.1';
+import { OneEuro, filterSettings } from './filters.js?v=0.5.2';
+import { FACE_TRIANGLES } from './facemesh-data.js?v=0.5.2';
 
 // Eigenes "Mesh-Gesicht": das MediaPipe-Gesichtsnetz wird direkt aus den
 // 478 erkannten Punkten aufgebaut. Keine Ausdrucks-Übersetzung dazwischen:

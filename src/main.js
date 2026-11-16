@@ -1,11 +1,11 @@
-import { AvatarStage } from './avatar.js?v=0.5.1';
-import { createFaceTracker, startCamera, parseFaceResult } from './tracking.js?v=0.5.1';
-import { mapVroid, mapPresets, mapPerfectSync, countPerfectSync, mapGaze, headEuler, ARKIT_NAMES } from './mapping.js?v=0.5.1';
-import { FilterBank, filterSettings } from './filters.js?v=0.5.1';
-import { Calibrator } from './calib.js?v=0.5.1';
-import { FaceMeshAvatar } from './facemesh.js?v=0.5.1';
+import { AvatarStage } from './avatar.js?v=0.5.2';
+import { createFaceTracker, startCamera, parseFaceResult } from './tracking.js?v=0.5.2';
+import { mapVroid, mapPresets, mapPerfectSync, countPerfectSync, mapGaze, headEuler, ARKIT_NAMES } from './mapping.js?v=0.5.2';
+import { FilterBank, filterSettings } from './filters.js?v=0.5.2';
+import { Calibrator } from './calib.js?v=0.5.2';
+import { FaceMeshAvatar } from './facemesh.js?v=0.5.2';
 
-export const VERSION = 'v0.5.1';
+export const VERSION = 'v0.5.2';
 
 // Offizielles pixiv-Beispielmodell (Weitergabe/Änderung erlaubt, Credit nicht nötig)
 const DEFAULT_VRM =
@@ -17,6 +17,7 @@ const video = $('cam');
 const statusEl = $('status');
 const statsEl = $('stats');
 const debugEl = $('debug');
+$('version').textContent = VERSION; // Versionsnummer nur an einer Stelle pflegen
 
 const state = {
   mirror: true,
