@@ -1,11 +1,12 @@
-import { AvatarStage } from './avatar.js?v=0.5.2';
-import { createFaceTracker, startCamera, parseFaceResult } from './tracking.js?v=0.5.2';
-import { mapVroid, mapPresets, mapPerfectSync, countPerfectSync, mapGaze, headEuler, ARKIT_NAMES } from './mapping.js?v=0.5.2';
-import { FilterBank, filterSettings } from './filters.js?v=0.5.2';
-import { Calibrator } from './calib.js?v=0.5.2';
-import { FaceMeshAvatar } from './facemesh.js?v=0.5.2';
+import { AvatarStage } from './avatar.js?v=0.6.0';
+import { createFaceTracker, createHandTracker, startCamera, parseFaceResult, parseHandResult } from './tracking.js?v=0.6.0';
+import { mapVroid, mapPresets, mapPerfectSync, countPerfectSync, mapGaze, headEuler, ARKIT_NAMES } from './mapping.js?v=0.6.0';
+import { FilterBank, filterSettings } from './filters.js?v=0.6.0';
+import { Calibrator } from './calib.js?v=0.6.0';
+import { FaceMeshAvatar } from './facemesh.js?v=0.6.0';
+import { HandState, HandMeshes, VrmArms } from './hands.js?v=0.6.0';
 
-export const VERSION = 'v0.5.2';
+export const VERSION = 'v0.6.0';
 
 // Offizielles pixiv-Beispielmodell (Weitergabe/Änderung erlaubt, Credit nicht nötig)
 const DEFAULT_VRM =
@@ -28,11 +29,16 @@ const state = {
   mode: '-', // VRoid | PerfectSync | Standard
   raw: {}, // geglättete Rohwerte (für Debug)
   showDebug: false,
-  stats: { renderFrames: 0, trackFrames: 0, detectMs: 0, lastStatAt: performance.now() },
+  handTracker: null,
+  handTick: 0,
+  handSlow: false,
+  lastFace: null,
+  lastHandApply: 0,
+  stats: { renderFrames: 0, trackFrames: 0, detectMs: 0, handMs: 0, lastStatAt: performance.now() },
 };
 
 const UI_KEY = 'avatar-tracker.ui.v1';
-let ui = { avatar: 'mesh', meshStyle: 'both', gain: 1.6 };
+let ui = { avatar: 'mesh', meshStyle: 'both', gain: 1.6, hands: true };
 try { ui = { ...ui, ...JSON.parse(localStorage.getItem(UI_KEY) || '{}') }; } catch {}
 const saveUi = () => { try { localStorage.setItem(UI_KEY, JSON.stringify(ui)); } catch {} };
 
@@ -45,6 +51,10 @@ const faceMesh = new FaceMeshAvatar();
 stage.faceMesh = faceMesh;
 stage.scene.add(faceMesh.group);
 faceMesh.setStyle(ui.meshStyle);
+const handState = new HandState();
+const handMeshes = new HandMeshes();
+faceMesh.group.add(handMeshes.group);
+const arms = new VrmArms();
 stage.setAvatarMode(ui.avatar);
 const filters = new FilterBank(filterSettings);
 const calib = new Calibrator();
@@ -55,6 +65,8 @@ async function loadAvatar(url) {
   setStatus(ui.avatar === 'mesh' ? '' : 'Lade VRoid-Modell…');
   try {
     await stage.load(url);
+    arms.bind(stage.vrm);
+    arms.captureRest();
     const ps = countPerfectSync(stage.expressionNames);
     state.mode = ps >= 20 ? 'PerfectSync' : stage.isVroid ? 'VRoid' : 'Standard';
     if (ui.avatar !== 'mesh') setStatus('VRoid-Modell bereit');
@@ -124,18 +136,51 @@ function track() {
   if (!state.tracker || video.readyState < 2) return;
   if (video.currentTime === state.lastVideoTime) return; // kein neues Kamerabild
   state.lastVideoTime = video.currentTime;
+  processFrame(video, video.videoWidth, video.videoHeight, performance.now());
+}
 
-  const now = performance.now();
-  const res = state.tracker.detectForVideo(video, now);
-  state.stats.detectMs = performance.now() - now;
+/** Ein Kamerabild verarbeiten: Gesicht + Hände erkennen und auf den Avatar übertragen. */
+function processFrame(src, width, height, now) {
+  const t0 = performance.now();
+  const res = state.tracker.detectForVideo(src, now);
+  const t1 = performance.now();
+  state.stats.detectMs = t1 - t0;
   state.stats.trackFrames++;
 
-  const face = parseFaceResult(res, video.videoWidth, video.videoHeight);
+  let hands = null;
+  if (state.handTracker && ui.hands) {
+    state.handTick++;
+    // Wird es zu langsam, Hände nur jedes 2. Bild erkennen (Glättung überbrückt)
+    if (!state.handSlow || state.handTick % 2 === 0) {
+      hands = parseHandResult(state.handTracker.detectForVideo(src, now));
+      state.stats.handMs = performance.now() - t1;
+      state.stats.handCount = hands.length;
+      state.handSlow = state.stats.detectMs + state.stats.handMs > 40;
+    }
+  }
+
+  const tSec = now / 1000;
+  const face = parseFaceResult(res, width, height);
   if (face) {
-    face.width = video.videoWidth;
-    face.height = video.videoHeight;
+    face.width = width;
+    face.height = height;
     state.lastFaceAt = now;
-    applyFace(face, now / 1000);
+    state.lastFace = face;
+    applyFace(face, tSec);
+  }
+  if (hands) handState.update(hands, tSec, now);
+  applyHands(now);
+}
+
+function applyHands(now) {
+  const dt = state.lastHandApply ? Math.min(0.1, (now - state.lastHandApply) / 1000) : 0.033;
+  state.lastHandApply = now;
+  if (ui.avatar === 'mesh') {
+    handMeshes.update(handState, ui.hands ? faceMesh.xf : null, now);
+    stage.fitMesh(handMeshes.points());
+  } else if (stage.vrm && arms.vrm) {
+    const face = now - state.lastFaceAt < 500 ? state.lastFace : null;
+    arms.update(ui.hands ? handState : { visible: () => false }, face, state.mirror, now, dt);
   }
 }
 
@@ -171,7 +216,8 @@ function updateStats() {
   const faceOk = now - state.lastFaceAt < 300;
   statsEl.textContent =
     `${VERSION} | Render ${(s.renderFrames / dt).toFixed(0)} fps | Track ${(s.trackFrames / dt).toFixed(0)} fps\n` +
-    `Erkennung ${s.detectMs.toFixed(1)} ms | ${state.delegate} | ${ui.avatar === 'mesh' ? 'Mesh-Gesicht' : state.mode} | ${faceOk ? 'Gesicht ✓' : 'kein Gesicht'}`;
+    `Gesicht ${s.detectMs.toFixed(0)} ms | Hände ${s.handMs.toFixed(0)} ms${state.handSlow ? ' (½)' : ''} | ${state.delegate}\n` +
+    `${ui.avatar === 'mesh' ? 'Mesh-Gesicht' : state.mode} | ${faceOk ? 'Gesicht ✓' : 'kein Gesicht'} | ${state.stats.handCount || 0} Hand/Hände`;
   s.renderFrames = 0; s.trackFrames = 0; s.lastStatAt = now;
 
   if (state.showDebug) {
@@ -199,10 +245,14 @@ $('btn-start').addEventListener('click', async () => {
   try {
     setStatus('Starte Kamera…');
     await startCamera(video);
-    setStatus('Lade Gesichtserkennung… (einmalig ~4 MB)');
-    const { landmarker, delegate } = await createFaceTracker();
-    state.tracker = landmarker;
-    state.delegate = delegate;
+    setStatus('Lade Gesichts- und Handerkennung… (einmalig ~12 MB)');
+    const [faceT, handT] = await Promise.all([
+      createFaceTracker(),
+      createHandTracker().catch((err) => { console.error(err); return null; }),
+    ]);
+    state.tracker = faceT.landmarker;
+    state.delegate = faceT.delegate;
+    state.handTracker = handT ? handT.landmarker : null;
     $('start-overlay').classList.add('hidden');
     setStatus('');
     if (!calib.calibrated && ui.avatar !== 'mesh') setTimeout(calibrate, 800);
@@ -221,6 +271,8 @@ $('opt-gain').addEventListener('input', (e) => { ui.gain = parseFloat(e.target.v
 $('opt-meshstyle').value = ui.meshStyle;
 $('opt-avatar').addEventListener('change', (e) => { ui.avatar = e.target.value; saveUi(); stage.setAvatarMode(ui.avatar); });
 $('opt-meshstyle').addEventListener('change', (e) => { ui.meshStyle = e.target.value; saveUi(); faceMesh.setStyle(ui.meshStyle); });
+$('opt-hands').checked = ui.hands;
+$('opt-hands').addEventListener('change', (e) => { ui.hands = e.target.checked; saveUi(); });
 $('opt-mirror').addEventListener('change', (e) => { state.mirror = e.target.checked; });
 $('opt-preview').addEventListener('change', (e) => video.classList.toggle('hidden', !e.target.checked));
 $('opt-green').addEventListener('change', (e) => stage.setGreenscreen(e.target.checked));
@@ -247,4 +299,4 @@ loadAvatar(params.get('vrm') || DEFAULT_VRM);
 loop();
 
 // Für Tests/Debugging in der Konsole
-window.__avatar = { stage, state, applyFace, calib, faceMesh, ui };
+window.__avatar = { stage, state, applyFace, processFrame, calib, faceMesh, handState, handMeshes, arms, ui };

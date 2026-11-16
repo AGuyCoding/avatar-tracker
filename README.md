@@ -2,6 +2,14 @@
 
 Gesicht per Handykamera → 3D-Avatar (VRM). Läuft komplett im Browser, keine Daten verlassen das Gerät.
 
+## Neu in v0.6
+- **Hände**: MediaPipe Hand Landmarker (2 Hände, 21 Punkte je Hand) läuft parallel zum Gesicht
+- Mesh-Gesicht: Drahtgitter-Hände in derselben Transformation wie das Gesicht, Kamera zoomt automatisch mit
+- VRoid: Arme per 2-Knochen-IK, Handgelenk-Ausrichtung und Fingerbeugung aus den Welt-Landmarks;
+  Tiefe der Hand aus dem Verhältnis Welt-Meter zu Bild-Pixeln (robust bei schräger Hand)
+- Wird die Erkennung zu langsam, laufen die Hände automatisch nur jedes 2. Bild
+- ⚙ → "Hände" an/aus
+
 ## Neu in v0.5
 - Mesh-Gesicht: Lider schließen beim Zwinkern vollständig (Öffnung relativ zum eigenen Auge gemessen)
 - Mesh-Gesicht: dicke Linien für Brauen, Augen und Lippen → Mimik viel besser lesbar, größerer Bildausschnitt

@@ -1,4 +1,4 @@
-import { FilesetResolver, FaceLandmarker } from '@mediapipe/tasks-vision';
+import { FilesetResolver, FaceLandmarker, HandLandmarker } from '@mediapipe/tasks-vision';
 
 const WASM_BASE = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.2.3/wasm';
 const FACE_MODEL =
@@ -20,6 +20,42 @@ export async function createFaceTracker({ wasmBase = WASM_BASE, modelPath = FACE
     console.warn('GPU nicht verfügbar, nutze CPU', err);
     return { landmarker: await FaceLandmarker.createFromOptions(fileset, options('CPU')), delegate: 'CPU' };
   }
+}
+
+const HAND_MODEL =
+  'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task';
+
+/** Erstellt den Hand Landmarker (bis zu 2 Hände). GPU, sonst CPU. */
+export async function createHandTracker({ wasmBase = WASM_BASE, modelPath = HAND_MODEL } = {}) {
+  const fileset = await FilesetResolver.forVisionTasks(wasmBase);
+  const options = (delegate) => ({
+    baseOptions: { modelAssetPath: modelPath, delegate },
+    runningMode: 'VIDEO',
+    numHands: 2,
+    minHandDetectionConfidence: 0.5,
+    minHandPresenceConfidence: 0.5,
+    minTrackingConfidence: 0.5,
+  });
+  try {
+    return { landmarker: await HandLandmarker.createFromOptions(fileset, options('GPU')), delegate: 'GPU' };
+  } catch (err) {
+    console.warn('Hand: GPU nicht verfügbar, nutze CPU', err);
+    return { landmarker: await HandLandmarker.createFromOptions(fileset, options('CPU')), delegate: 'CPU' };
+  }
+}
+
+/**
+ * Hand-Ergebnis -> [{ side: 'Left'|'Right' (Hand des Nutzers), score, lm: [21], world: [21] }]
+ */
+export function parseHandResult(res) {
+  if (!res || !res.landmarks) return [];
+  const sides = res.handedness || res.handednesses || [];
+  return res.landmarks.map((lm, i) => ({
+    side: sides[i]?.[0]?.categoryName || (i === 0 ? 'Right' : 'Left'),
+    score: sides[i]?.[0]?.score ?? 0,
+    lm,
+    world: res.worldLandmarks?.[i] || null,
+  }));
 }
 
 /** Startet die Frontkamera. */

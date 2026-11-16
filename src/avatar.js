@@ -120,10 +120,21 @@ export class AvatarStage {
     this.frame();
   }
 
+  /** Mesh-Modus: Kamera-Abstand so wählen, dass Gesicht + Hände ins Bild passen (weich). */
+  fitMesh(points) {
+    let hx = 0.085, hy = 0.11;
+    for (const p of points) { hx = Math.max(hx, Math.abs(p.x) + 0.035); hy = Math.max(hy, Math.abs(p.y) + 0.035); }
+    const t = Math.tan(THREE.MathUtils.degToRad(this.camera.fov / 2));
+    const d = Math.max(hy / t, hx / (t * this.camera.aspect)) + 0.02;
+    this.meshDist = this.meshDist ? this.meshDist + (d - this.meshDist) * 0.06 : d;
+    this.camera.position.set(0, 0, this.meshDist);
+    this.camera.lookAt(0, 0, 0);
+  }
+
   frame() {
     if (this.avatarMode === 'mesh') {
-      this.camera.position.set(0, 0, this.camera.aspect < 1 ? 0.34 : 0.3);
-      this.camera.lookAt(0, 0, 0);
+      this.meshDist = 0;
+      this.fitMesh([]);
     } else if (this.vrm) {
       this.frameBust();
     }
