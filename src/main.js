@@ -1,12 +1,12 @@
-import { AvatarStage } from './avatar.js?v=0.6.0';
-import { createFaceTracker, createHandTracker, startCamera, parseFaceResult, parseHandResult } from './tracking.js?v=0.6.0';
-import { mapVroid, mapPresets, mapPerfectSync, countPerfectSync, mapGaze, headEuler, ARKIT_NAMES } from './mapping.js?v=0.6.0';
-import { FilterBank, filterSettings } from './filters.js?v=0.6.0';
-import { Calibrator } from './calib.js?v=0.6.0';
-import { FaceMeshAvatar } from './facemesh.js?v=0.6.0';
-import { HandState, HandMeshes, VrmArms } from './hands.js?v=0.6.0';
+import { AvatarStage } from './avatar.js?v=0.6.1';
+import { createFaceTracker, createHandTracker, startCamera, parseFaceResult, parseHandResult } from './tracking.js?v=0.6.1';
+import { mapVroid, mapPresets, mapPerfectSync, countPerfectSync, mapGaze, headEuler, ARKIT_NAMES } from './mapping.js?v=0.6.1';
+import { FilterBank, filterSettings } from './filters.js?v=0.6.1';
+import { Calibrator } from './calib.js?v=0.6.1';
+import { FaceMeshAvatar } from './facemesh.js?v=0.6.1';
+import { HandState, HandMeshes, VrmArms } from './hands.js?v=0.6.1';
 
-export const VERSION = 'v0.6.0';
+export const VERSION = 'v0.6.1';
 
 // Offizielles pixiv-Beispielmodell (Weitergabe/Änderung erlaubt, Credit nicht nötig)
 const DEFAULT_VRM =

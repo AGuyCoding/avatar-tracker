@@ -23,7 +23,7 @@ export async function createFaceTracker({ wasmBase = WASM_BASE, modelPath = FACE
 }
 
 const HAND_MODEL =
-  'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task';
+  'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/latest/hand_landmarker.task';
 
 /** Erstellt den Hand Landmarker (bis zu 2 Hände). GPU, sonst CPU. */
 export async function createHandTracker({ wasmBase = WASM_BASE, modelPath = HAND_MODEL } = {}) {
